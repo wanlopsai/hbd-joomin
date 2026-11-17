@@ -348,6 +348,12 @@
     <!-- แคนวาสสำหรับลวดลายน่ารักๆ ลอยเบาๆ และพลุกระดาษตอนจบ -->
     <canvas id="celebration-canvas"></canvas>
 
+    <!-- ไฟล์เสียงเพลงพื้นหลัง every_year.mp3 จาก GitHub Repository (wanlopsai/hbd-joomin) -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="every_year.mp3" type="audio/mpeg">
+        <source src="https://raw.githubusercontent.com/wanlopsai/hbd-joomin/main/every_year.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- ปุ่มเปิด/ปิดเสียงมุมขวาบน -->
     <button id="audio-toggle" class="audio-control" aria-label="เปิดหรือปิดเสียงเพลง" title="เปิด/ปิดเสียงเพลง">
         <!-- ไอคอนลำโพงเปิดเสียง -->
@@ -454,180 +460,45 @@
 
     <script>
         /**
-         * รายการข้อความทั้ง 13 ข้อความตามลำดับ พร้อมอิโมจิน่ารักเหมาะสม
+         * ระบบควบคุมการเล่นไฟล์เพลง MP3 (every_year.mp3) จาก GitHub
+         * รองรับการปลดล็อกเสียงบนมือถือ (iOS / Android) เมื่อผู้ใช้แตะหน้าจอเริ่มต้น
          */
-        const MESSAGES = [
-            "วันนี้เป็นวันที่พิเศษเนอะ 😊✨",
-            "วันอะไรจำได้มั้ยเอ๋ย 🤔💭",
-            "วันเกิดน้องจูมินไง 🎂🎉",
-            "สุขสันต์วันเกิดนะ 🥳💖",
-            "อะไรที่ทำให้รู้สึกแย่ 🌧️🥺",
-            "หวังว่าตัวเล็กจะผ่านมันไปได้นะ 🌈💪🤍",
-            "มีความสุขให้มากๆ 🥰✨",
-            "แล้วก็ยิ้มให้เยอะๆ 😄🌸",
-            "เพราะว่าหนูเหมาะกับรอยยิ้มที่สุดแล้ว 😊☀️💕",
-            "ชานมวันนี้กินหมดมั้ยนะ 🧋🧐",
-            "พี่คนนี้อยากคุยด้วยตลอดนะ 🥺💬💗",
-            "แล้วก็อย่าลืมไปหาหมอด้วยนะ ไอเด็กดื้อ 🏥🩺😝💕",
-            "สุขสันต์วันเกิด 17 ปีนะคะ น้องจูมิน 🎂🎉💖✨"
-        ];
-
-        /**
-         * ระบบสร้างเสียงดนตรีกล่องดนตรี (Music Box / Soft Piano Synth) ด้วย Web Audio API
-         * เล่นทำนองเพลง "Happy Birthday to You" แบบนุ่มนวลและวนซ้ำอัตโนมัติ
-         */
-        class MusicBoxPlayer {
-            constructor() {
-                this.ctx = null;
-                this.masterGain = null;
-                this.isPlaying = false;
+        class Mp3BackgroundPlayer {
+            constructor(audioElement) {
+                this.audio = audioElement;
                 this.isMuted = false;
-                this.schedulerTimer = null;
-                this.currentNoteIndex = 0;
-                this.nextNoteTime = 0;
-
-                // ความถี่โน้ตดนตรี (หน่วย Hz) คีย์ F Major เพื่อโทนเสียงที่อบอุ่น นุ่มนวล
-                const N = {
-                    C4: 261.63,
-                    D4: 293.66,
-                    E4: 329.63,
-                    F4: 349.23,
-                    G4: 392.00,
-                    A4: 440.00,
-                    Bb4: 466.16,
-                    C5: 523.25,
-                    D5: 587.33,
-                    E5: 659.25,
-                    F5: 698.46,
-                    F3: 174.61,
-                    C3: 130.81,
-                    Bb3: 233.08,
-                    A3: 220.00,
-                    G3: 196.00
-                };
-
-                this.beatDuration = 0.62;
-                this.melody = [
-                    // "Hap-py Birth-day to you"
-                    { f: N.C4, h: null, d: 0.75 },
-                    { f: N.C4, h: null, d: 0.25 },
-                    { f: N.D4, h: N.F3, d: 1.0 },
-                    { f: N.C4, h: N.A3, d: 1.0 },
-                    { f: N.F4, h: N.C4, d: 1.0 },
-                    { f: N.E4, h: N.C3, d: 2.0 },
-
-                    // "Hap-py Birth-day to you"
-                    { f: N.C4, h: null, d: 0.75 },
-                    { f: N.C4, h: null, d: 0.25 },
-                    { f: N.D4, h: N.C3, d: 1.0 },
-                    { f: N.C4, h: N.G3, d: 1.0 },
-                    { f: N.G4, h: N.Bb3, d: 1.0 },
-                    { f: N.F4, h: N.F3, d: 2.0 },
-
-                    // "Hap-py Birth-day dear Joo-min"
-                    { f: N.C4, h: null, d: 0.75 },
-                    { f: N.C4, h: null, d: 0.25 },
-                    { f: N.C5, h: N.F3, d: 1.0 },
-                    { f: N.A4, h: N.C4, d: 1.0 },
-                    { f: N.F4, h: N.Bb3, d: 1.0 },
-                    { f: N.E4, h: N.G3, d: 1.0 },
-                    { f: N.D4, h: N.Bb3, d: 2.0 },
-
-                    // "Hap-py Birth-day to you"
-                    { f: N.Bb4, h: null, d: 0.75 },
-                    { f: N.Bb4, h: null, d: 0.25 },
-                    { f: N.A4, h: N.F3, d: 1.0 },
-                    { f: N.F4, h: N.C4, d: 1.0 },
-                    { f: N.G4, h: N.C3, d: 1.0 },
-                    { f: N.F4, h: N.F3, d: 2.5 },
-
-                    // พักหายใจสั้นๆ ก่อนวนรอบใหม่
-                    { f: null, h: null, d: 1.0 }
-                ];
-            }
-
-            init() {
-                if (!this.ctx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.ctx = new AudioContext();
-                    this.masterGain = this.ctx.createGain();
-                    this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 0.35, this.ctx.currentTime);
-                    this.masterGain.connect(this.ctx.destination);
-                }
-                if (this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                if (this.audio) {
+                    this.audio.volume = 0.7;
                 }
             }
 
             start() {
-                this.init();
-                if (this.isPlaying) return;
-                this.isPlaying = true;
-                this.currentNoteIndex = 0;
-                this.nextNoteTime = this.ctx.currentTime + 0.15;
-                this.schedule();
-            }
+                if (!this.audio) return;
+                this.audio.volume = 0.7;
+                this.audio.muted = this.isMuted;
 
-            schedule() {
-                if (!this.isPlaying) return;
-
-                while (this.nextNoteTime < this.ctx.currentTime + 0.25) {
-                    const note = this.melody[this.currentNoteIndex];
-                    const durationSec = note.d * this.beatDuration;
-
-                    if (note.f) {
-                        this.playMusicBoxTone(note.f, this.nextNoteTime, durationSec, 0.24);
-                    }
-                    if (note.h) {
-                        this.playMusicBoxTone(note.h, this.nextNoteTime, durationSec * 1.4, 0.10);
-                    }
-
-                    this.nextNoteTime += durationSec;
-                    this.currentNoteIndex = (this.currentNoteIndex + 1) % this.melody.length;
+                const playPromise = this.audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch((error) => {
+                        console.warn('ไม่สามารถเล่นไฟล์เสียงอัตโนมัติได้:', error);
+                    });
                 }
-
-                this.schedulerTimer = setTimeout(() => this.schedule(), 50);
             }
 
-            playMusicBoxTone(freq, startTime, duration, volume) {
-                if (!this.ctx) return;
-
-                const oscMain = this.ctx.createOscillator();
-                const oscBell = this.ctx.createOscillator();
-                const gainNode = this.ctx.createGain();
-                const bellGain = this.ctx.createGain();
-
-                oscMain.type = 'sine';
-                oscMain.frequency.setValueAtTime(freq, startTime);
-
-                oscBell.type = 'triangle';
-                oscBell.frequency.setValueAtTime(freq * 2, startTime);
-
-                bellGain.gain.setValueAtTime(0.15, startTime);
-                bellGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
-
-                const releaseTime = Math.max(duration + 0.9, 1.3);
-                gainNode.gain.setValueAtTime(0.0001, startTime);
-                gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.025);
-                gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + releaseTime);
-
-                oscMain.connect(gainNode);
-                oscBell.connect(bellGain);
-                bellGain.connect(gainNode);
-                gainNode.connect(this.masterGain);
-
-                oscMain.start(startTime);
-                oscBell.start(startTime);
-
-                oscMain.stop(startTime + releaseTime + 0.05);
-                oscBell.stop(startTime + releaseTime + 0.05);
+            ensurePlaying() {
+                if (!this.audio) return;
+                if (this.audio.paused && !this.isMuted) {
+                    this.audio.play().catch(() => {});
+                }
             }
 
             toggleMute() {
                 this.isMuted = !this.isMuted;
-                if (this.masterGain && this.ctx) {
-                    const targetGain = this.isMuted ? 0 : 0.35;
-                    this.masterGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.08);
+                if (this.audio) {
+                    this.audio.muted = this.isMuted;
+                    if (!this.isMuted && this.audio.paused) {
+                        this.audio.play().catch(() => {});
+                    }
                 }
                 return this.isMuted;
             }
@@ -827,8 +698,9 @@
             const iconSoundOn = document.getElementById('icon-sound-on');
             const iconSoundOff = document.getElementById('icon-sound-off');
             const canvas = document.getElementById('celebration-canvas');
+            const bgMusicEl = document.getElementById('bg-music');
 
-            const musicPlayer = new MusicBoxPlayer();
+            const musicPlayer = new Mp3BackgroundPlayer(bgMusicEl);
             const cuteBg = new CuteBackgroundEffect(canvas);
 
             let sequenceTimeouts = [];
@@ -916,6 +788,7 @@
             function replayExperience() {
                 clearAllTimers();
                 cuteBg.stopCelebration();
+                musicPlayer.ensurePlaying();
 
                 endingScreen.classList.remove('visible');
                 cakeDisplay.classList.add('compact');

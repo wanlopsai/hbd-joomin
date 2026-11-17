@@ -9,13 +9,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Itim&family=Mali:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* นำเข้าไฟล์ฟอนต์ Mali-Regular.ttf ที่อยู่ในโฟลเดอร์หลัก (main) โดยตรง พร้อมลิงก์สำรองจาก GitHub */
+        @font-face {
+            font-family: 'MaliLocal';
+            src: url('./Mali-Regular.ttf') format('truetype'),
+                 url('https://raw.githubusercontent.com/wanlopsai/hbd-joomin/main/Mali-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
         /* รีเซ็ตค่าพื้นฐานและการตั้งค่าหน้าจอ */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
-            font-family: 'Mali', 'Itim', cursive, sans-serif;
+            font-family: 'MaliLocal', 'Mali', 'Itim', cursive, sans-serif;
         }
 
         html, body {
@@ -24,8 +34,8 @@
             /* พื้นหลังโทนพาสเทลละมุนตา (ครีม - ชมพูอ่อน - พีชพาสเทล) */
             background: linear-gradient(135deg, #FFF9F2 0%, #FFE6EE 48%, #FFD9CE 100%);
             color: #5D3A3A; /* สีน้ำตาลช็อกโกแลตเข้มอบอุ่น อ่านง่ายชัดเจน */
-            /* บังคับใช้ฟอนต์ลายมือภาษาไทย Mali และ Itim */
-            font-family: 'Mali', 'Itim', cursive, sans-serif;
+            /* บังคับใช้ฟอนต์ลายมือภาษาไทยจากไฟล์ Mali-Regular.ttf */
+            font-family: 'MaliLocal', 'Mali', 'Itim', cursive, sans-serif;
             overflow: hidden; /* ป้องกัน scrollbar ส่วนเกิน */
             user-select: none;
             -webkit-user-select: none;
@@ -33,7 +43,7 @@
 
         /* กำหนดให้ปุ่มต่างๆ ใช้ฟอนต์ลายมือเดียวกับทั้งหน้าเว็บ */
         button {
-            font-family: 'Mali', 'Itim', cursive, sans-serif;
+            font-family: 'MaliLocal', 'Mali', 'Itim', cursive, sans-serif;
         }
 
         /* ลวดลายจุด Polka dot และแสงฟุ้งน่ารักๆ ด้านหลัง */
@@ -699,6 +709,23 @@
             const iconSoundOff = document.getElementById('icon-sound-off');
             const canvas = document.getElementById('celebration-canvas');
             const bgMusicEl = document.getElementById('bg-music');
+
+            // รายการข้อความอวยพรทั้ง 13 บรรทัดพร้อมอิโมจิ
+            const MESSAGES = [
+                "วันนี้เป็นวันที่พิเศษเนอะ 😊✨",
+                "วันอะไรจำได้มั้ยเอ๋ย 🤔💭",
+                "วันเกิดน้องจูมินไง 🎂🎉",
+                "สุขสันต์วันเกิดนะ 🥳💖",
+                "อะไรที่ทำให้รู้สึกแย่ 🌧️🥺",
+                "หวังว่าตัวเล็กจะผ่านมันไปได้นะ 🌈💪✨",
+                "มีความสุขให้มากๆ 😊🌸",
+                "แล้วก็ยิ้มให้เยอะๆ 😄☀️",
+                "เพราะว่าหนูเหมาะกับรอยยิ้มที่สุดแล้ว 🥰💕",
+                "ชานมวันนี้กินหมดมั้ยนะ 🧋🧐",
+                "พี่คนนี้อยากคุยด้วยตลอดนะ 🥺💬💗",
+                "แล้วก็อย่าลืมไปหาหมอด้วยนะ ไอเด็กดื้อ 🏥🩺😜",
+                "สุขสันต์วันเกิด 17 ปีนะคะ น้องจูมิน 🎂🎉💖✨"
+            ];
 
             const musicPlayer = new Mp3BackgroundPlayer(bgMusicEl);
             const cuteBg = new CuteBackgroundEffect(canvas);
